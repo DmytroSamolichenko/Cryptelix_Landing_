@@ -6,11 +6,7 @@
 const header = document.getElementById('header');
 
 window.addEventListener('scroll', () => {
-  if (window.scrollY > 40) {
-    header.classList.add('scrolled');
-  } else {
-    header.classList.remove('scrolled');
-  }
+  header.classList.toggle('scrolled', window.scrollY > 40);
 });
 
 // ── Scroll-to-top button ──────────────────────────────────────────────────────
@@ -21,11 +17,7 @@ scrollTopBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="
 document.body.appendChild(scrollTopBtn);
 
 window.addEventListener('scroll', () => {
-  if (window.scrollY > 400) {
-    scrollTopBtn.classList.add('visible');
-  } else {
-    scrollTopBtn.classList.remove('visible');
-  }
+  scrollTopBtn.classList.toggle('visible', window.scrollY > 400);
 });
 
 scrollTopBtn.addEventListener('click', () => {
@@ -58,7 +50,6 @@ function handleWaitlist(e) {
   const email = emailInput.value.trim();
   if (!email) return;
 
-  // Save locally (simulate)
   const entries = JSON.parse(localStorage.getItem('cryptelix_waitlist') || '[]');
   if (!entries.includes(email)) {
     entries.push(email);
@@ -69,43 +60,96 @@ function handleWaitlist(e) {
   showToast('🎉 You\'re on the list! We\'ll reach out soon.');
 }
 
-// ── Intersection Observer – fade-in cards ─────────────────────────────────────
-const observedEls = document.querySelectorAll(
-  '.feature-card, .step-card, .pricing-card, .integration-item'
-);
+// ── Hero entrance animation (runs once on load) ───────────────────────────────
+window.addEventListener('load', () => {
+  const heroEls = [
+    { el: document.querySelector('.badge'),         delay: 0,   anim: 'revealUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards' },
+    { el: document.querySelector('.hero-title'),    delay: 120, anim: 'revealUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards' },
+    { el: document.querySelector('.hero-subtitle'), delay: 240, anim: 'revealUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards' },
+    { el: document.querySelector('.hero-cta'),      delay: 360, anim: 'revealUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards' },
+    { el: document.querySelector('.hero-note'),     delay: 460, anim: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards' },
+  ];
 
-const fadeObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = '1';
-      entry.target.style.transform = 'translateY(0)';
-      fadeObserver.unobserve(entry.target);
-    }
+  heroEls.forEach(({ el, delay, anim }) => {
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(28px)';
+    setTimeout(() => {
+      el.style.animation = anim;
+      el.style.opacity   = '';
+      el.style.transform = '';
+    }, delay);
   });
-}, { threshold: 0.1 });
-
-observedEls.forEach((el) => {
-  el.style.opacity = '0';
-  el.style.transform = 'translateY(24px)';
-  el.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
-  fadeObserver.observe(el);
 });
 
+// ── Staggered scroll-reveal system ───────────────────────────────────────────
+/**
+ * Registers elements for scroll-reveal with per-element animation config.
+ * @param {string} selector  – CSS selector
+ * @param {object} opts      – { animation, duration, easing, stagger, threshold }
+ */
+function registerReveal(selector, opts = {}) {
+  const {
+    animation  = 'revealUp',
+    duration   = 600,
+    easing     = 'cubic-bezier(0.22,1,0.36,1)',
+    stagger    = 80,      // ms between siblings
+    threshold  = 0.12,
+  } = opts;
+
+  const elements = document.querySelectorAll(selector);
+  if (!elements.length) return;
+
+  // Hide initially
+  elements.forEach((el) => {
+    el.style.opacity  = '0';
+    el.style.willChange = 'opacity, transform';
+  });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+
+      const el = entry.target;
+      // Find sibling index for stagger
+      const siblings = [...el.parentElement.children].filter(
+        (c) => c.matches(selector)
+      );
+      const idx = siblings.indexOf(el);
+      const delay = idx * stagger;
+
+      setTimeout(() => {
+        el.style.animation = `${animation} ${duration}ms ${easing} forwards`;
+      }, delay);
+
+      io.unobserve(el);
+    });
+  }, { threshold });
+
+  elements.forEach((el) => io.observe(el));
+}
+
+// Register each group with its own animation flavour
+registerReveal('.pain-card',         { animation: 'revealUp',    duration: 650, stagger: 90  });
+registerReveal('.feature-card',      { animation: 'revealUp',    duration: 650, stagger: 90  });
+registerReveal('.step-card',         { animation: 'scaleIn',     duration: 600, stagger: 140 });
+registerReveal('.integration-item',  { animation: 'revealUp',    duration: 550, stagger: 60  });
+registerReveal('.pricing-card',      { animation: 'revealUp',    duration: 650, stagger: 120 });
+registerReveal('.section-title',     { animation: 'revealUp',    duration: 600, stagger: 0   });
+registerReveal('.section-subtitle',  { animation: 'revealUp',    duration: 550, stagger: 0, threshold: 0.2 });
+
 // ── Smooth nav link highlight ─────────────────────────────────────────────────
-const sections = document.querySelectorAll('section[id]');
-const navLinks = document.querySelectorAll('.nav-link');
+const sections  = document.querySelectorAll('section[id]');
+const navLinks  = document.querySelectorAll('.nav-link');
 
 const sectionObserver = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
       const id = entry.target.id;
       navLinks.forEach((link) => {
-        link.style.color = link.getAttribute('href') === `#${id}`
-          ? 'var(--gold-light)'
-          : '';
-        link.style.background = link.getAttribute('href') === `#${id}`
-          ? 'rgba(201,168,76,0.1)'
-          : '';
+        const active = link.getAttribute('href') === `#${id}`;
+        link.style.color      = active ? 'var(--gold-light)' : '';
+        link.style.background = active ? 'rgba(192,132,0,0.12)' : '';
       });
     }
   });
