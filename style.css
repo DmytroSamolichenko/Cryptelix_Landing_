@@ -724,47 +724,52 @@ body {
 }
 
 /* ========== INTEGRATIONS ========== */
-.integrations-grid {
+.carousel-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 20px 0;
+  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+.carousel-track {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+  width: max-content;
+  align-items: center;
+  gap: 32px;
+  animation: scrollCarousel 40s linear infinite;
+}
+
+.carousel-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scrollCarousel {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } 
 }
 
 .integration-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 22px 28px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  min-width: 110px;
-  transition: border-color 0.28s, transform 0.28s, box-shadow 0.28s;
-  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
-  overflow: hidden;
+  gap: 12px;
+  padding: 8px 16px;
+  transition: transform 0.28s, opacity 0.28s;
   position: relative;
+  opacity: 0.6;
 }
 
 .integration-item:hover {
-  border-color: rgba(220,175,80,0.45);
   transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,230,140,0.22);
+  opacity: 1;
 }
 
-.integration-logo {
-  width: 42px;
-  height: 42px;
-}
-
-.integration-item span {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.03em;
+.integration-img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
 }
 
 /* ========== PRICING ========== */
@@ -793,7 +798,6 @@ body {
   max-width: 340px;
   position: relative;
   transition: border-color 0.30s, transform 0.30s, box-shadow 0.30s;
-  overflow: hidden;
   box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
 }
 
